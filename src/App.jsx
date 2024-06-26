@@ -1,8 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import Auth from "./components/Auth";
-import { db } from "./config/firebase";
-import { getDocs, collection, addDoc } from "firebase/firestore";
+import { db, auth } from "./config/firebase";
+import {
+  getDocs,
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 
 function App() {
   const [movieList, setMovieList] = useState([]);
@@ -10,6 +18,8 @@ function App() {
   const [newMovieTitle, setNewMovieTitle] = useState("");
   const [newMovieReleaseDate, setNewMovieReleaseDate] = useState(0);
   const [newMovieIsKannada, setNewMovieIsKannada] = useState(false);
+
+  const [updatedTitle, setUpdatedTitle] = useState("");
 
   const moviesCollectionRef = collection(db, "movies");
 
@@ -36,11 +46,24 @@ function App() {
         title: newMovieTitle,
         releaseDate: newMovieReleaseDate,
         isKannadaMovie: newMovieIsKannada,
+        userId: auth?.currentUser.uid,
       });
       getMovieList();
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const deleteMovie = async (id) => {
+    const movieDoc = doc(db, "movies", id);
+    await deleteDoc(movieDoc);
+    getMovieList();
+  };
+
+  const updateMovieTitle = async (id) => {
+    const movieDoc = doc(db, "movies", id);
+    await updateDoc(movieDoc, { title: updatedTitle });
+    getMovieList();
   };
 
   return (
@@ -73,6 +96,16 @@ function App() {
               {movie.title}
             </h1>
             <p>Date: {movie.releaseDate}</p>
+
+            <button onClick={() => deleteMovie(movie.id)}>Delete movie</button>
+
+            <input
+              placeholder="new title.."
+              onChange={(e) => setUpdatedTitle(e.target.value)}
+            />
+            <button onClick={() => updateMovieTitle(movie.id)}>
+              Update Title
+            </button>
           </div>
         ))}
       </div>
